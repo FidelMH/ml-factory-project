@@ -1,0 +1,57 @@
+services:
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow
+    container_name: mlflow_server
+    depends_on: [minio]
+    ports: ["5000:5000"]
+    environment:
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root s3://mlflow/
+      --host 0.0.0.0
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # Interface Web (Console)
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data  # dossier /data de MinIO 
+
+  app_api:
+    build: ./src/api
+    container_name: app_api
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    networks:
+      - app_network
+    depends_on:
+      db:
+        condition: service_healthy
+    command: python main.py
+
+
+  app_front:
+    build: ./src/front
+    container_name: app_front
+    environment:
+      - API_URL=http://app_api:8000
+    networks:
+      - app_network
+    ports:
+      - "8501:8501"
+    command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0  
+volumes:
+  minio_data: 
