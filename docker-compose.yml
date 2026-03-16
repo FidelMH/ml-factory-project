@@ -11,11 +11,15 @@ services:
       - MLFLOW_S3_ENDPOINT_URL=${MLFLOW_S3_ENDPOINT_URL}
       - AWS_ACCESS_KEY_ID=${MINIO_ROOT_USER}
       - AWS_SECRET_ACCESS_KEY=${MINIO_ROOT_PASSWORD}
+    networks:
+      - app_network
     command: >
       mlflow server
-      --backend-store-uri sqlite:///mlflow.db
+      --backend-store-uri sqlite:////mlflow/mlflow.db
       --default-artifact-root s3://mlflow/
       --host 0.0.0.0
+    volumes:
+      - mlflow_data:/mlflow
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 10s
@@ -32,6 +36,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
+    networks:
+      - app_network
     volumes:
       - minio_data:/data  # dossier /data de MinIO
     healthcheck:
@@ -47,6 +53,8 @@ services:
       - .env
     ports:
       - "8000:8000"
+    environment:
+      MLFLOW_URL: ${MLFLOW_URL}
     networks:
       - app_network
     depends_on:
@@ -60,10 +68,14 @@ services:
     container_name: app_front
     environment:
       - API_URL=http://app_api:8000
+      - MLFLOW_URL=${MLFLOW_URL}
     networks:
       - app_network
     ports:
       - "8501:8501"
+    depends_on:
+      app_api:
+        condition: service_started
     command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0  
 
 networks:
@@ -71,4 +83,5 @@ networks:
     driver: bridge
 
 volumes:
-  minio_data: 
+  minio_data:
+  mlflow_data:
