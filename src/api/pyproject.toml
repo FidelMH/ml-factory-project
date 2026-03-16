@@ -1,9 +1,9 @@
 [project]
-name = "ml-factory-project"
+name = "api"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "mlflow>=3.10.1",
+    "fastapi>=0.135.1",
 ]
