@@ -1,5 +1,6 @@
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, recall_score, f1_score
 from sklearn.pipeline import Pipeline
@@ -53,12 +54,14 @@ def train_and_register():
             "test_size": 0.2,
             "random_state": 42,
             "scaler": "StandardScaler",
-            "model": "LogisticRegression",
+            # "model": "LogisticRegression",
+            "model": "RandomForestClassifier",
         }
 
         model = Pipeline([
             ('scaler', StandardScaler()),
-            ('classifier', LogisticRegression())
+            # ('classifier', LogisticRegression())
+            ('classifier', RandomForestClassifier())
         ])
         model.fit(X_train, y_train)
         y_pred = model.predict(X_test)
@@ -88,7 +91,7 @@ def train_and_register():
 
 
     # On lui attribue l'alias 'Production'
-    client.set_registered_model_alias(model_name, "Production", latest_version)
+    # client.set_registered_model_alias(model_name, "Production", latest_version)
 
 prepare_minio()
 train_and_register()

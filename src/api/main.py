@@ -3,10 +3,10 @@ from mlflow.tracking import MlflowClient
 import mlflow
 import pandas as pd
 import os
-from pydantic import BaseModel
+from pydantic import BaseModel,  ConfigDict, ValidationError
 
 
-df = pd.read_csv("data/iris_test.csv", index_col=0)
+# df = pd.read_csv("data/iris_test.csv", index_col=0)
 
 app = FastAPI()
 mlflow.set_tracking_uri(os.getenv("MLFLOW_URL", "http://mlflow:5000"))
@@ -16,7 +16,7 @@ state = {
     "version": None
 }
 MODEL_NAME = 'iris_model'
-MODEL_ALIAS = 'Production'
+MODEL_ALIAS = 'production'
 
 class IrisData(BaseModel):
     sepal_length: float
@@ -24,6 +24,7 @@ class IrisData(BaseModel):
     petal_length: float
     petal_width: float
     
+
 
 def load_production_model():
     """Vérifie la version en production et recharge si nécessaire."""
@@ -55,22 +56,23 @@ def get_model_infos():
     return {"success": True, "model_infos": {"version": state["version"]}}
 
 
-@app.get("/predict")
-async  def predict():
-    sample = df.sample(n=1, ignore_index=True)
-    sample = sample.drop(['target'], axis=1)
+@app.post("/predict")
+async  def predict(data: IrisData):
+    input_df = pd.DataFrame([{
+        "sepal length (cm)": data.sepal_length,
+        "sepal width (cm)":  data.sepal_width,
+        "petal length (cm)": data.petal_length,
+        "petal width (cm)":  data.petal_width,
+    }])
+    # sample = df.sample(n=1, ignore_index=True)
+    # sample = sample.drop(['target'], axis=1)
     model = load_production_model()
     if not model:
         return {"error" : "error loading model"}
-    pred = model.predict(sample)
-    row = sample.iloc[0]
-    iris_data = IrisData(
-        sepal_length=row["sepal length (cm)"],
-        sepal_width=row["sepal width (cm)"],
-        petal_length=row["petal length (cm)"],
-        petal_width=row["petal width (cm)"],
-    )
-    return {"prediction": int(pred[0]), "data": iris_data}
+    pred = model.predict(input_df)
+    proba = model._model_impl.predict_proba(input_df)[0].tolist()
+
+    return {"prediction": int(pred[0]), "probabilities": proba}
 
 
 if __name__ == "__main__":

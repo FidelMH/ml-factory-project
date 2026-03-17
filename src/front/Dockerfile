@@ -10,4 +10,4 @@ RUN uv pip install --system -r pyproject.toml
 
 COPY . .
 
-CMD ["streamlit", "run", "main.py"]
+CMD ["streamlit", "run", "app.py"]

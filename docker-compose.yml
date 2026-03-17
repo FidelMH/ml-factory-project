@@ -72,16 +72,18 @@ services:
     build: ./src/front
     container_name: app_front
     environment:
-      - API_URL=http://app_api:8000
+      - API_URL=http://app_api:8000/
       - MLFLOW_URL=${MLFLOW_URL}
     networks:
       - app_network
+    volumes:
+      - csv_data:/data
     ports:
       - "8501:8501"
     depends_on:
       app_api:
         condition: service_started
-    command: streamlit run main.py --server.port 8501 --server.address 0.0.0.0  
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
 
 networks:
   app_network:
@@ -90,3 +92,4 @@ networks:
 volumes:
   minio_data:
   mlflow_data:
+  csv_data:
