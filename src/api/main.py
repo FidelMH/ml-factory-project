@@ -72,7 +72,7 @@ async  def predict(data: IrisData):
     pred = model.predict(input_df)
     proba = model._model_impl.predict_proba(input_df)[0].tolist()
 
-    return {"prediction": int(pred[0]), "probabilities": proba}
+    return {"prediction": int(pred[0]), "probabilities": proba, "version": state['version']}
 
 
 if __name__ == "__main__":

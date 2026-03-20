@@ -4,7 +4,7 @@ import requests
 from requests.exceptions import HTTPError
 import pandas as pd 
 
-API_URL = os.getenv("API_URL","http://localhost:8501/")
+API_URL = os.getenv("API_URL","http://localhost:8000/")
 
 def predict(row):
     try:
@@ -30,11 +30,12 @@ def get_model_info():
         st.error(f"Impossible de récupérer les infos du modèle : {e}")
         return None
 
+model_info = get_model_info()
 st.title("Iris Species Predictor")
 
-model_info = get_model_info()
+
 if model_info:
-    st.sidebar.info(f"Modèle en production : v{model_info['model_infos']['version']}")
+    st.badge(f"Modèle v{model_info['model_infos']['version']}", icon="✅", color="green")
     
 df = pd.read_csv("data/iris_test.csv", index_col=0).sample(n=10)
 labels = ["Iris setosa","Iris versicolor","Iris virginica" ]
@@ -48,7 +49,8 @@ if charger:
     if prediction_data:
         label_index = prediction_data["prediction"]
         label = labels[label_index]
+        version = prediction_data["version"]
         proba = prediction_data["probabilities"][label_index]
-        st.success(f"Prédiction: {label} ({proba:.0%})")
+        st.success(f"Prédiction: {label} ({proba:.0%}) ")
     
     

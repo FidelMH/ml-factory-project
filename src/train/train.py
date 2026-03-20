@@ -91,7 +91,7 @@ def train_and_register():
 
 
     # On lui attribue l'alias 'Production'
-    # client.set_registered_model_alias(model_name, "Production", latest_version)
+    client.set_registered_model_alias(model_name, "Production", latest_version)
 
 prepare_minio()
 train_and_register()
